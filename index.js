@@ -38,7 +38,8 @@ module.exports = function (opts) {
       this.emit('error', new PluginError(PluginName, 'Streaming not supported'));
       return cb();
     }
-    var pdcProcess = pandoc(from, to, args);
+    var spawnOpts = { cwd: file.dirname };
+    var pdcProcess = pandoc({ from, to, args, opts: spawnOpts });
     pdcProcess.stdin.end(input);
     var chunks = [];
     var size = 0;
