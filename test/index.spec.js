@@ -17,7 +17,7 @@ describe('pandoc()', function() {
 
     var stream = pandoc({
       from: 'markdown',
-      to: 'pdf',
+      to: 'jjs',
       ext: '.html',
       args: ['--smart']
     });
