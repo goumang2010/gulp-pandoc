@@ -35,18 +35,18 @@ module.exports = function (opts) {
   var write = /pdf/.test(ext);
 
   var normalHandler = function (file, enc, cb) {
-    var input = file.contents;
     if (file.isNull()) {
       this.push(file);
       return cb();
     }
-    if (file.isStream()) {
-      this.emit('error', new PluginError(PluginName, 'Streaming not supported'));
-      return cb();
-    }
     var spawnOpts = { cwd: file.dirname };
     var pdcProcess = pandoc({ from, to, args, opts: spawnOpts });
-    pdcProcess.stdin.end(input);
+    if (file.isStream()) {
+      file.contents.pipe(pdcProcess.stdin);
+    } else {
+      pdcProcess.stdin.end(file.contents);
+    }
+    
     var chunks = [];
     var size = 0;
 
@@ -72,7 +72,6 @@ module.exports = function (opts) {
     });
   }
   var binaryHandler = function (file, enc, cb) {
-    var input = file.contents;
     var tempfolder = path.join(file.dirname || '', './_temp');
     if (!fs.existsSync(tempfolder)) fs.mkdirSync(tempfolder);
     var tempfile = crypto.createHash('sha1').update(file.path).digest('hex').substr(0, 10) + '.' + to;
@@ -82,17 +81,17 @@ module.exports = function (opts) {
       this.push(file);
       return cb();
     }
-    if (file.isStream()) {
-      this.emit('error', new PluginError(PluginName, 'Streaming not supported'));
-      return cb();
-    }
     var spawnOpts = { cwd: file.dirname };
     // https://github.com/tzengyuxio/pages
     // https://afoo.me/posts/2013-07-10-how-to-transform-chinese-pdf-with-pandoc.html
     var pandocArgs = ['-o', target, '--latex-engine=xelatex', '-V', 'mainfont=Hei', `--template=${__dirname}/pm-template`];
     [].push.apply(pandocArgs, args);
     var pdcProcess = pandoc({ from, to, args: pandocArgs, opts: spawnOpts });
-    pdcProcess.stdin.end(input);
+    if (file.isStream()) {
+      file.contents.pipe(pdcProcess.stdin);
+    } else {
+      pdcProcess.stdin.end(file.contents);
+    }
     // listen on exit
     pdcProcess.on('close', (code) => {
       if (fs.existsSync(target)) {
