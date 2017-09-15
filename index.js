@@ -17,7 +17,6 @@ var PluginName = 'gulp-pdc';
 /* Exports */
 
 module.exports = function (opts) {
-  var macro = opts.macro;
   var from = opts.from;
   var to = opts.to;
   var ext = opts.ext;
